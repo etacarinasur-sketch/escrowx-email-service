@@ -32,7 +32,6 @@ function readBody(req) {
 
 async function sendResendEmail({to, subject, html, text}) {
   if (!RESEND_API_KEY) throw new Error("RESEND_API_KEY is not configured.");
-
   const r = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: {
@@ -41,11 +40,12 @@ async function sendResendEmail({to, subject, html, text}) {
     },
     body: JSON.stringify({ from: FROM_EMAIL, to: [to], subject, html, text })
   });
-
   const data = await r.json().catch(() => ({}));
   if (!r.ok) throw new Error(data?.message || data?.error || `Resend HTTP ${r.status}`);
   return data;
 }
+
+function validEmail(v) { return /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(String(v || "").trim()); }
 
 const server = http.createServer(async (req, res) => {
   if (req.method === "OPTIONS") return sendJson(res, 204, {ok:true});
@@ -60,24 +60,29 @@ const server = http.createServer(async (req, res) => {
     });
   }
 
-  if (req.method === "POST" && req.url === "/send-verification") {
+  if (req.method === "POST" && (req.url === "/send-verification" || req.url === "/send-email")) {
     try {
       const body = await readBody(req);
       const to = String(body.to || "").trim();
-      const code = String(body.code || "").trim();
+      if (!validEmail(to)) return sendJson(res, 400, {ok:false, error:"Invalid recipient email."});
 
-      if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(to))
-        return sendJson(res, 400, {ok:false, error:"Invalid recipient email."});
-      if (!/^\d{6}$/.test(code))
-        return sendJson(res, 400, {ok:false, error:"Verification code must be 6 digits."});
+      let subject, text, html;
+      if (req.url === "/send-verification") {
+        const code = String(body.code || "").trim();
+        if (!/^\d{6}$/.test(code)) return sendJson(res, 400, {ok:false, error:"Verification code must be 6 digits."});
+        subject = String(body.subject || "ESCROW X — Verify your email");
+        text = `ESCROW X P2P\n\nYour email verification code is: ${code}\n\nThis code expires in 10 minutes.\n\nIf you did not create an ESCROW X account, you can ignore this email.`;
+        html = `<!doctype html><html><body style="font-family:Arial,sans-serif;line-height:1.5"><h2>ESCROW X P2P</h2><p>Your email verification code is:</p><p style="font-size:30px;font-weight:700;letter-spacing:6px">${code}</p><p>This code expires in <strong>10 minutes</strong>.</p><p>If you did not create an ESCROW X account, you can ignore this email.</p></body></html>`;
+      } else {
+        subject = String(body.subject || "ESCROW X P2P notification").trim();
+        text = String(body.text || "").trim();
+        html = String(body.html || "").trim();
+        if (!subject || !text) return sendJson(res, 400, {ok:false, error:"Subject and text are required."});
+        if (!html) html = `<pre style="font-family:Arial,sans-serif;white-space:pre-wrap">${text.replace(/[&<>]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]))}</pre>`;
+        if (subject.length > 200 || text.length > 20000 || html.length > 50000) return sendJson(res, 400, {ok:false, error:"Email content is too large."});
+      }
 
-      const result = await sendResendEmail({
-        to,
-        subject: "ESCROW X — Verify your email",
-        text: `ESCROW X P2P\n\nYour email verification code is: ${code}\n\nThis code expires in 10 minutes.\n\nIf you did not create an ESCROW X account, you can ignore this email.`,
-        html: `<!doctype html><html><body style="font-family:Arial,sans-serif;line-height:1.5"><h2>ESCROW X P2P</h2><p>Your email verification code is:</p><p style="font-size:30px;font-weight:700;letter-spacing:6px">${code}</p><p>This code expires in <strong>10 minutes</strong>.</p><p>If you did not create an ESCROW X account, you can ignore this email.</p></body></html>`
-      });
-
+      const result = await sendResendEmail({to, subject, html, text});
       return sendJson(res, 200, {ok:true, provider:"Resend", messageId:result.id || null});
     } catch (e) {
       return sendJson(res, 500, {ok:false, error:e.message || "Email send failed."});
