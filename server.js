@@ -171,18 +171,45 @@ const server = http.createServer(async (req, res) => {
         ).trim();
 
         text =
-          `ESCROW X P2P\n\n` +
-          `Your email verification code is: ${code}\n\n` +
-          `This code expires in 10 minutes.\n\n` +
-          `If you did not create an ESCROW X account, you can ignore this email.`;
+          `ESCROW X P2P MARKETPLACE\n\n` +
+          `Welcome to EscrowX.\n\n` +
+          `To complete your registration, enter the verification code below in the EscrowX Marketplace.\n\n` +
+          `Verification code: ${code}\n\n` +
+          `This code expires in 10 minutes and is valid only for this verification request.\n\n` +
+          `SECURITY NOTICE\n` +
+          `Never share this verification code with anyone. If you did not create an EscrowX account, you can safely ignore this email.\n\n` +
+          `This is an automated security message from EscrowX P2P Marketplace.`;
 
         html =
-          `<!doctype html><html><body style="font-family:Arial,sans-serif;line-height:1.5">` +
-          `<h2>ESCROW X P2P</h2>` +
-          `<p>Your email verification code is:</p>` +
-          `<p style="font-size:30px;font-weight:700;letter-spacing:6px">${code}</p>` +
-          `<p>This code expires in <strong>10 minutes</strong>.</p>` +
-          `<p>If you did not create an ESCROW X account, you can ignore this email.</p>` +
+          `<!doctype html>` +
+          `<html><body style="margin:0;padding:0;background:#f4f7fb;font-family:Arial,Helvetica,sans-serif;color:#24324a">` +
+          `<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#f4f7fb;padding:28px 12px">` +
+          `<tr><td align="center">` +
+          `<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="max-width:620px;background:#ffffff;border:1px solid #dfe7f1;border-radius:18px;overflow:hidden">` +
+          `<tr><td style="padding:28px 32px;background:#0b1730;text-align:center">` +
+          `<div style="font-size:30px;line-height:1;font-weight:900;color:#ffffff;letter-spacing:1px">ESCROW<span style="color:#18a0ff">X</span></div>` +
+          `<div style="margin-top:8px;font-size:12px;letter-spacing:3px;color:#aebbd0">P2P MARKETPLACE</div>` +
+          `</td></tr>` +
+          `<tr><td style="padding:38px 36px 30px">` +
+          `<div style="font-size:30px;line-height:1.2;font-weight:800;color:#173a78;text-align:center">Verify your email</div>` +
+          `<div style="margin-top:14px;font-size:15px;line-height:1.65;color:#596b84;text-align:center">Thank you for creating your EscrowX account. To complete your registration, enter the verification code below.</div>` +
+          `<div style="margin:26px 0;padding:20px 16px;text-align:center;background:#f2f7ff;border:1px solid #cfe1fa;border-radius:14px">` +
+          `<div style="font-size:11px;font-weight:800;letter-spacing:1.4px;color:#71829a;text-transform:uppercase">Email verification code</div>` +
+          `<div style="margin-top:10px;font-size:38px;line-height:1.15;font-weight:900;letter-spacing:10px;color:#1456c8">${code}</div>` +
+          `<div style="margin-top:10px;font-size:13px;color:#66758b">Expires in <strong style="color:#173a78">10 minutes</strong></div>` +
+          `</div>` +
+          `<div style="font-size:14px;line-height:1.65;color:#596b84">Enter this code in the <strong style="color:#24324a">EscrowX Marketplace</strong> verification window. The code is single-use for this verification request.</div>` +
+          `<div style="margin-top:22px;padding:15px 17px;border-left:4px solid #18a0ff;background:#f7fbff;color:#596b84;font-size:13px;line-height:1.6">` +
+          `<strong style="color:#173a78">Security notice</strong><br>` +
+          `Never share your verification code with anyone. If you did not create an EscrowX account, you can safely ignore this email.` +
+          `</div>` +
+          `</td></tr>` +
+          `<tr><td style="padding:18px 28px;background:#f8fafc;border-top:1px solid #e4eaf2;text-align:center">` +
+          `<div style="font-size:12px;color:#718096">EscrowX P2P Marketplace · Secure peer-to-peer exchange</div>` +
+          `<div style="font-size:11px;color:#94a1b2;margin-top:6px">This is an automated security message. Please do not reply.</div>` +
+          `</td></tr>` +
+          `</table>` +
+          `</td></tr></table>` +
           `</body></html>`;
       } else {
         subject = String(
