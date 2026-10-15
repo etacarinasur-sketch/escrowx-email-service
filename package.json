@@ -1,11 +1,11 @@
 {
   "name": "escrowx-email-service",
-  "version": "1.0.0",
+  "version": "2.0.0-preview",
   "private": true,
   "description": "Small Node.js email service for ESCROW X P2P",
-  "main": "server.js",
+  "main": "server_V2_BRANDED.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server_V2_BRANDED.js"
   },
   "engines": {
     "node": ">=18"
