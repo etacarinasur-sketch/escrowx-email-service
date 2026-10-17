@@ -1,13 +1,9 @@
 {
   "name": "escrowx-email-service",
-  "version": "2.0.0-preview",
+  "version": "3.0.0",
   "private": true,
-  "description": "Small Node.js email service for ESCROW X P2P",
-  "main": "server_V2_BRANDED.js",
-  "scripts": {
-    "start": "node server_V2_BRANDED.js"
-  },
-  "engines": {
-    "node": ">=18"
-  }
+  "description": "Branded transactional email service for ESCROW X P2P (Gmail API)",
+  "main": "server.js",
+  "scripts": { "start": "node server.js" },
+  "engines": { "node": ">=18" }
 }
