@@ -313,35 +313,36 @@ const server = http.createServer(async (req, res) => {
 
   if (req.method === 'POST' && (url.pathname === '/send-verification' || url.pathname === '/send-email')) {
     const requestId = `email_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`;
+    const reply = (st, obj) => { if (st >= 400) console.log(JSON.stringify({ event: 'email_rejected', status: st, error: obj && obj.error, requestId })); return sendJson(req, res, st, obj); };
     try {
       if (!ALLOWED_ORIGINS.includes('*') && req.headers.origin && !ALLOWED_ORIGINS.includes(req.headers.origin)) {
-        return sendJson(req, res, 403, { ok: false, error: 'Origin not allowed.', requestId });
+        return reply(403, { ok: false, error: 'Origin not allowed.', requestId });
       }
       let trusted = false; // the platform API (authenticated with EMAIL_API_KEY) has its own per-user limits
       if (EMAIL_API_KEY) {
         const sent = String(req.headers.authorization || '').replace(/^Bearer\s+/i, '');
         const ha = crypto.createHash('sha256').update(sent).digest(), hb = crypto.createHash('sha256').update(EMAIL_API_KEY).digest();
-        if (!crypto.timingSafeEqual(ha, hb)) return sendJson(req, res, 401, { ok: false, error: 'Unauthorized.', requestId });
+        if (!crypto.timingSafeEqual(ha, hb)) return reply(401, { ok: false, error: 'Unauthorized.', requestId });
         trusted = true;
       }
-      if (!trusted && rateLimited(`ip:${ip}`, RATE_IP_MAX)) return sendJson(req, res, 429, { ok: false, error: 'Too many requests. Try again later.', requestId });
+      if (!trusted && rateLimited(`ip:${ip}`, RATE_IP_MAX)) return reply(429, { ok: false, error: 'Too many requests. Try again later.', requestId });
       const body = await readBody(req);
       const to = String(body.to || '').trim();
-      if (!validEmail(to)) return sendJson(req, res, 400, { ok: false, error: 'Invalid recipient email.', requestId });
-      if (rateLimited(`to:${to.toLowerCase()}`, RATE_TO_MAX)) return sendJson(req, res, 429, { ok: false, error: 'Too many emails to this address. Try again later.', requestId });
+      if (!validEmail(to)) return reply(400, { ok: false, error: 'Invalid recipient email.', requestId });
+      if (rateLimited(`to:${to.toLowerCase()}`, RATE_TO_MAX)) return reply(429, { ok: false, error: 'Too many emails to this address. Try again later.', requestId });
 
       let subject, type, code = '', text = '';
       if (url.pathname === '/send-verification') {
         code = String(body.code || '').trim();
-        if (!/^\d{6}$/.test(code)) return sendJson(req, res, 400, { ok: false, error: 'Verification code must be 6 digits.', requestId });
+        if (!/^\d{6}$/.test(code)) return reply(400, { ok: false, error: 'Verification code must be 6 digits.', requestId });
         subject = String(body.subject || 'EscrowX — Verification code').trim();
         type = TYPES[String(body.type || '')] ? String(body.type) : 'verification';
         text = `Your code is ${code}. It expires in 15 minutes.`;
       } else {
         text = String(body.text || '').trim();
         subject = String(body.subject || 'EscrowX Marketplace notification').trim();
-        if (!subject || !text) return sendJson(req, res, 400, { ok: false, error: 'Subject and text are required.', requestId });
-        if (subject.length > 200 || text.length > 20000) return sendJson(req, res, 400, { ok: false, error: 'Email content is too large.', requestId });
+        if (!subject || !text) return reply(400, { ok: false, error: 'Subject and text are required.', requestId });
+        if (subject.length > 200 || text.length > 20000) return reply(400, { ok: false, error: 'Email content is too large.', requestId });
         subject = subject.replace(/[\r\n]+/g, ' ');
         type = detectType(body, subject, text);
         if (TYPES[type].kind === 'code') code = String(body.code || (text.match(/\b(\d{6})\b/) || [])[1] || '');
@@ -349,10 +350,10 @@ const server = http.createServer(async (req, res) => {
       const mail = renderEmail({ type, subject, text, code });
       console.log(JSON.stringify({ event: 'gmail_send_start', requestId, to, subject, type }));
       const result = await sendGmail({ to, subject, text: mail.text, html: mail.html });
-      return sendJson(req, res, 200, { ok: true, provider: 'Gmail API', messageId: result.id || null, type, requestId });
+      return reply(200, { ok: true, provider: 'Gmail API', messageId: result.id || null, type, requestId });
     } catch (e) {
       console.error(JSON.stringify({ event: 'gmail_send_error', requestId, error: e.message }));
-      return sendJson(req, res, 500, { ok: false, error: e.message || 'Email send failed.', requestId });
+      return reply(500, { ok: false, error: e.message || 'Email send failed.', requestId });
     }
   }
   return sendJson(req, res, 404, { ok: false, error: 'Not found.' });
