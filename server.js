@@ -83,7 +83,7 @@ function rateLimited(key, max) {
 }
 
 /* ---------------------------------------------------------------- templates */
-const C = { bg: '#050914', card: '#0a1328', cardAlt: '#0d1a36', line: '#17305f', blue: '#1a7bff', cyan: '#4fd1ff', text: '#eef5ff', muted: '#9fb1d1', faint: '#6f82a8', ok: '#34d399', warn: '#fbbf24' };
+const C = { bg: '#eef2f8', card: '#ffffff', cardAlt: '#f1f6ff', line: '#d6e0f0', blue: '#1a7bff', cyan: '#0a66d6', text: '#0b1b3a', muted: '#475874', faint: '#7a8aa8', ok: '#0f9d6a', warn: '#d98a00' }; // light theme
 
 const TYPES = {
   verification:     { title: 'Verify your email',                 intro: 'Use this code to verify your account on EscrowX Marketplace.', kind: 'code',   warn: 'Never share this code with anyone. The EscrowX team will never ask for it.', preheader: 'Your EscrowX verification code' },
@@ -146,7 +146,7 @@ function parseFacts(type, text) {
 
 function codeBlock(code) {
   const spaced = esc(code); // no real spaces between digits: the code must copy and paste as one clean number
-  return `<tr><td align="center" style="padding:8px 28px 6px"><table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 auto"><tr><td align="center" bgcolor="${C.cardAlt}" style="background:${C.cardAlt};border:1px solid ${C.blue};border-radius:14px;padding:18px 26px;font-family:'Courier New',Consolas,monospace;font-size:36px;line-height:1;font-weight:700;letter-spacing:4px;color:#ffffff">${spaced}</td></tr></table></td></tr>`;
+  return `<tr><td align="center" style="padding:8px 28px 6px"><table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 auto"><tr><td align="center" bgcolor="${C.cardAlt}" style="background:${C.cardAlt};border:1px solid ${C.blue};border-radius:14px;padding:18px 26px;font-family:'Courier New',Consolas,monospace;font-size:36px;line-height:1;font-weight:700;letter-spacing:4px;color:${C.text}">${spaced}</td></tr></table></td></tr>`;
 }
 function factsBlock(facts) {
   if (!facts.length) return '';
@@ -192,13 +192,13 @@ function renderEmail({ type, subject, text, code }) {
 
   const footerLink = APP_URL ? ` · <a href="${esc(APP_URL)}" style="color:${C.cyan};text-decoration:none">${esc(APP_URL.replace(/^https?:\/\//, ''))}</a>` : '';
   const html = `<!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="dark light"><meta name="supported-color-schemes" content="dark light"><title>${esc(subject || def.title)}</title></head>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"><meta name="supported-color-schemes" content="light"><title>${esc(subject || def.title)}</title></head>
 <body style="margin:0;padding:0;background:${C.bg};-webkit-text-size-adjust:100%">
 <div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent">${esc(def.preheader)}&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;</div>
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="${C.bg}" style="background:${C.bg}"><tr><td align="center" style="padding:24px 12px">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="${C.card}" style="max-width:560px;background:${C.card};border:1px solid ${C.line};border-radius:18px;overflow:hidden;font-family:-apple-system,'Segoe UI',Roboto,Arial,sans-serif">
 <tr><td align="center" style="padding:26px 24px 18px;border-bottom:1px solid ${C.line}"><img src="${LOGO_URL}" width="168" alt="EscrowX Marketplace" style="display:block;width:168px;max-width:70%;height:auto;border:0;border-radius:14px"></td></tr>
-<tr><td align="center" style="padding:26px 28px 6px;font-size:22px;line-height:1.3;font-weight:700;color:#ffffff">${esc(def.title)}</td></tr>
+<tr><td align="center" style="padding:26px 28px 6px;font-size:22px;line-height:1.3;font-weight:700;color:${C.text}">${esc(def.title)}</td></tr>
 <tr><td style="padding:6px 0 0"></td></tr>
 ${content}
 <tr><td style="padding:22px 28px 0"><div style="border-top:1px solid ${C.line}"></div></td></tr>
@@ -228,7 +228,7 @@ async function sendGmail({ to, subject, text, html }) {
   const boundary = `escrowx_${crypto.randomBytes(12).toString('hex')}`;
   const encodedSubject = `=?UTF-8?B?${Buffer.from(subject, 'utf8').toString('base64')}?=`;
   const mime = [
-    `From: EscrowX <${FROM_EMAIL}>`, `To: ${to}`, `Subject: ${encodedSubject}`, 'MIME-Version: 1.0',
+    `From: EscrowX <${FROM_EMAIL}>`, `To: ${to}`, 'Auto-Submitted: auto-generated', 'Content-Language: en', `Subject: ${encodedSubject}`, 'MIME-Version: 1.0',
     `Content-Type: multipart/alternative; boundary="${boundary}"`, '',
     `--${boundary}`, 'Content-Type: text/plain; charset="UTF-8"', 'Content-Transfer-Encoding: base64', '', Buffer.from(text, 'utf8').toString('base64'),
     `--${boundary}`, 'Content-Type: text/html; charset="UTF-8"', 'Content-Transfer-Encoding: base64', '', Buffer.from(html, 'utf8').toString('base64'),
