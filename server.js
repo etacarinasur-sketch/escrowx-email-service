@@ -32,7 +32,7 @@ const LOGO_PATH = path.join(__dirname, 'escrowx-logo-email.png');
 const ENABLE_PREVIEW = process.env.ENABLE_PREVIEW === '1';
 const EMAIL_API_KEY = process.env.EMAIL_API_KEY || ''; // when set, /send-email and /send-verification require 'Authorization: Bearer <key>'
 const RATE_IP_MAX = Number(process.env.RATE_IP_MAX || 40);          // per 10 min
-const RATE_TO_MAX = Number(process.env.RATE_RECIPIENT_MAX || 8);    // per 10 min
+const RATE_TO_MAX = Number(process.env.RATE_RECIPIENT_MAX || 15);    // per 10 min
 const OAUTH_STATE_TTL_MS = 10 * 60 * 1000;
 const oauthStates = new Map();
 
@@ -317,12 +317,14 @@ const server = http.createServer(async (req, res) => {
       if (!ALLOWED_ORIGINS.includes('*') && req.headers.origin && !ALLOWED_ORIGINS.includes(req.headers.origin)) {
         return sendJson(req, res, 403, { ok: false, error: 'Origin not allowed.', requestId });
       }
+      let trusted = false; // the platform API (authenticated with EMAIL_API_KEY) has its own per-user limits
       if (EMAIL_API_KEY) {
         const sent = String(req.headers.authorization || '').replace(/^Bearer\s+/i, '');
         const ha = crypto.createHash('sha256').update(sent).digest(), hb = crypto.createHash('sha256').update(EMAIL_API_KEY).digest();
         if (!crypto.timingSafeEqual(ha, hb)) return sendJson(req, res, 401, { ok: false, error: 'Unauthorized.', requestId });
+        trusted = true;
       }
-      if (rateLimited(`ip:${ip}`, RATE_IP_MAX)) return sendJson(req, res, 429, { ok: false, error: 'Too many requests. Try again later.', requestId });
+      if (!trusted && rateLimited(`ip:${ip}`, RATE_IP_MAX)) return sendJson(req, res, 429, { ok: false, error: 'Too many requests. Try again later.', requestId });
       const body = await readBody(req);
       const to = String(body.to || '').trim();
       if (!validEmail(to)) return sendJson(req, res, 400, { ok: false, error: 'Invalid recipient email.', requestId });
