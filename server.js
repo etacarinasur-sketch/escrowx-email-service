@@ -145,7 +145,7 @@ function parseFacts(type, text) {
 }
 
 function codeBlock(code) {
-  const spaced = esc(code).split('').join('&nbsp;');
+  const spaced = esc(code); // no real spaces between digits: the code must copy and paste as one clean number
   return `<tr><td align="center" style="padding:8px 28px 6px"><table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 auto"><tr><td align="center" bgcolor="${C.cardAlt}" style="background:${C.cardAlt};border:1px solid ${C.blue};border-radius:14px;padding:18px 26px;font-family:'Courier New',Consolas,monospace;font-size:36px;line-height:1;font-weight:700;letter-spacing:4px;color:#ffffff">${spaced}</td></tr></table></td></tr>`;
 }
 function factsBlock(facts) {
